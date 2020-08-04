@@ -118,21 +118,26 @@ def main():
             flout.write(txt)
             txt = "|-\n"
             flout.write(txt)
-            #txt = f"|+ {pgnm} માટેનું ભાષા વિશ્લેષણ \n"
-            #flout.write(txt)
-            #txt = "|-\n"
-            #flout.write(txt)
+            txt = f"|+ {pgnm} માટેનું ભાષા વિશ્લેષણ \n"
+            flout.write(txt)
+            txt = "|-\n"
+            flout.write(txt)
             txt = "! ક્રમ !! સંખ્યા !! શબ્દ\n"
             flout.write(txt)
             txt = "|-\n"
             flout.write(txt)
+            grand_total = 0
             for i, word in enumerate(sorted(words_list, key=words_list.get, reverse=True), start=1):
                 txt = F"| {i} || {words_list[word]:>7d}  || {word:} \n"
+                grand_total += words_list[word]
                 flout.write(txt)
                 txt = "|-\n"
                 flout.write(txt)
 
-            txt = "|}\n"
+            txt = "|}\n\n"
+            flout.write(txt)
+            unique_words = len(words_list. keys())
+            txt = f"કુલ {grand_total} શબ્દોના લખાણમાં અનન્ય શબ્દ {unique_words} છે.\n\n"
             flout.write(txt)
 
 if __name__ == '__main__':
