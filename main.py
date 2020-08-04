@@ -27,11 +27,12 @@ count_gen = count(1)
 
 """
     For carrying out Language Analysis, we need only text, without any punctuation
-    marks. The text we are targeting to process punctuation marks not only limited to 
-    Gujarati Language. Manual inspection revealed that there may be punctuation marks 
-    from English, Hindi and Sanskrit Language as well.
-    Therefore, below a variable holding the list of all the punctuation marks is 
-    created using list comprehension and then converting into a dictionary.
+    marks. The text we are targeting to process, has punctuation marks not only 
+    limited to Gujarati Language but also from other languages. Manual inspection 
+    revealed that there may be punctuation marks from English, Hindi and Sanskrit 
+    Language as well. 
+    Therefore, below a variable holding the list of all the punctuation marks in
+    entire unicode set is created using dictionary comprehension.
 """
 tbl = {i: " " for i in range(sys.maxunicode)
        if unicodedata.category(chr(i)).startswith('P')}
@@ -49,8 +50,6 @@ if not os.path.exists(out_txt_dir):
     Following just accepts text as input and using String class's translate method
     remove all possible punctuation marks from the text. So that   
 """
-
-
 def remove_punctuation(text):
     return text.translate(tbl)
 
@@ -59,8 +58,6 @@ def remove_punctuation(text):
     Tried using re module's power to identify punctuations but somehow it is not 
     removing punctuations.
 """
-
-
 def remove_punctuation2(text):
     return re.sub(u"[[:punct:]]", "", text)
 
@@ -72,18 +69,22 @@ def wikisourec_page_uri_generator():
 
 
 def wikisource_get_page_text(pg):
+    print(F"Connecting to WikiSource to get the text for {pg}.")
     status = rq.get(pg)
-    pg_content = bs(status.text, 'html.parser')
-    pgttl = pg_content.h1.text
-    pgtxt = ""
-    # print(pg_content.prettify())
-    for i, j in enumerate(pg_content.find_all(class_="prp-pages-output")):
-        # for i, j in enumerate(pg_content.find_all(id='bodyContent', limit=1)):
-        # print(i, j)
-        pgtxt = j.text
-        break
-    # else:
-    #     print("Hello")
+    if status.status_code ==200:
+        print(F"Connection Successful. Received the text.")
+        pg_content = bs(status.text, 'html.parser')
+        pgttl = pg_content.h1.text
+        pgtxt = ""
+        # print(pg_content.prettify())
+        for i, j in enumerate(pg_content.find_all(class_="prp-pages-output")):
+            # for i, j in enumerate(pg_content.find_all(id='bodyContent', limit=1)):
+            # print(i, j)
+            pgtxt = j.text
+            break
+    else:
+        pgttl, pgtxt  = -1, ""
+
     return pgttl, pgtxt
 
 
@@ -92,6 +93,7 @@ def check_whether_text_from_the_page_is_already_downloaded(in_fl_nm):
 
 
 def get_text_from_the_local_file(full_file_name):
+    print("Local copy found. So using that copy.")
     with open(full_file_name) as f:
         text = f.read()
     return text
@@ -100,7 +102,7 @@ def get_text_from_the_local_file(full_file_name):
 def main():
     for no, pgnm, pguri in wikisourec_page_uri_generator():
         pgnm = pgnm.translate({ord("/"): "_"})
-        print(no, pgnm)
+        print(F"Processing started for {no} - {pgnm}")
 
         full_in_flnm = os.path.join(in_txt_dir, f"{pgnm}-in.txt")
         full_ou_flnm = os.path.join(out_txt_dir, f"{pgnm}-out.txt")
@@ -112,7 +114,9 @@ def main():
             with open(full_in_flnm, "w") as f:
                 f.write(y)
 
+        print("Generating word list...")
         words_list = Counter(y.split())
+        print("Generating word list...Done.")
         with open(full_ou_flnm, "w") as flout:
             txt = "{| class=\"wikitable sortable\"\n"
             flout.write(txt)
@@ -139,6 +143,7 @@ def main():
             unique_words = len(words_list. keys())
             txt = f"કુલ {grand_total} શબ્દોના લખાણમાં અનન્ય શબ્દ {unique_words} છે.\n\n"
             flout.write(txt)
+            print(F"Task over for {pgnm}.\n\n\n")
 
 if __name__ == '__main__':
     main()
