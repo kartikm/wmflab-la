@@ -32,7 +32,8 @@ count_gen = count(1)
     revealed that there may be punctuation marks from English, Hindi and Sanskrit 
     Language as well. 
     Therefore, below a variable holding the list of all the punctuation marks in
-    entire unicode set is created using dictionary comprehension.
+    entire unicode set is created using dictionary comprehension. This variable is 
+    used later on to remove the punctuation marks from the text.
 """
 tbl = {i: " " for i in range(sys.maxunicode)
        if unicodedata.category(chr(i)).startswith('P')}
@@ -48,7 +49,8 @@ if not os.path.exists(out_txt_dir):
 
 """
     Following just accepts text as input and using String class's translate method
-    remove all possible punctuation marks from the text. So that   
+    remove all possible punctuation marks from the text. So that the text can be processed 
+    without any issues.
 """
 def remove_punctuation(text):
     return text.translate(tbl)
