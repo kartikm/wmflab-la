@@ -84,7 +84,6 @@ def wikisourec_page_uri_generator():
             is_it_done = ""
             a_uri_part = a_uri.strip()
 
-
         if is_it_done.strip().upper() == "DONE":
             continue
 
