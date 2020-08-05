@@ -35,9 +35,8 @@ count_gen = count(1)
     entire unicode set is created using dictionary comprehension. This variable is 
     used later on to remove the punctuation marks from the text.
 """
-tbl = {i: " " for i in range(sys.maxunicode)
-       if unicodedata.category(chr(i)).startswith('P')}
-
+translation_table = {i: " " for i in range(sys.maxunicode)
+                     if unicodedata.category(chr(i)).startswith('P')}
 
 curr_folder = os.getcwd()
 in_txt_dir = os.path.join(curr_folder, "in")
@@ -52,28 +51,38 @@ if not os.path.exists(out_txt_dir):
     remove all possible punctuation marks from the text. So that the text can be processed 
     without any issues.
 """
+
+
 def remove_punctuation(text):
-    return text.translate(tbl)
+    return text.translate(translation_table)
 
 
 """
     Tried using re module's power to identify punctuations but somehow it is not 
     removing punctuations.
 """
+
+
 def remove_punctuation2(text):
     return re.sub(u"[[:punct:]]", "", text)
 
 
 def wikisourec_page_uri_generator():
     base_uri = 'https://gu.wikisource.org/wiki/'
-    yield next(count_gen), 'પલકારા/માસ્તર_સાહેબ', base_uri + 'પલકારા/માસ્તર_સાહેબ'
+    with open("page_names.txt") as furis:
+        uri_list = furis.readlines()
+    for a_uri in uri_list:
+        if a_uri.strip() == "":
+            continue
+        yield next(count_gen), a_uri.strip(), base_uri + a_uri.strip()
+    # yield next(count_gen), 'પલકારા/માસ્તર_સાહેબ', base_uri + 'પલકારા/માસ્તર_સાહેબ'
     return
 
 
 def wikisource_get_page_text(pg):
     print(F"Connecting to WikiSource to get the text for {pg}.")
     status = rq.get(pg)
-    if status.status_code ==200:
+    if status.status_code == 200:
         print(F"Connection Successful. Received the text.")
         pg_content = bs(status.text, 'html.parser')
         pgttl = pg_content.h1.text
@@ -85,7 +94,7 @@ def wikisource_get_page_text(pg):
             pgtxt = j.text
             break
     else:
-        pgttl, pgtxt  = -1, ""
+        pgttl, pgtxt = -1, ""
 
     return pgttl, pgtxt
 
@@ -102,29 +111,30 @@ def get_text_from_the_local_file(full_file_name):
 
 
 def main():
-    for no, pgnm, pguri in wikisourec_page_uri_generator():
-        pgnm = pgnm.translate({ord("/"): "_"})
-        print(F"Processing started for {no} - {pgnm}")
+    for a_number, page_name, page_uri in wikisourec_page_uri_generator():
+        os_friendly_page_name = page_name.translate({ord("/"): "_"})
+        print(F"Processing started for {a_number} - {page_name}")
 
-        full_in_flnm = os.path.join(in_txt_dir, f"{pgnm}-in.txt")
-        full_ou_flnm = os.path.join(out_txt_dir, f"{pgnm}-out.txt")
-        if check_whether_text_from_the_page_is_already_downloaded(full_in_flnm):
-            y = get_text_from_the_local_file(full_in_flnm)
+        full_in_file_name = os.path.join(in_txt_dir, f"{os_friendly_page_name}-in.txt")
+        full_ou_file_name = os.path.join(out_txt_dir, f"{os_friendly_page_name}-out.txt")
+        if check_whether_text_from_the_page_is_already_downloaded(full_in_file_name):
+            page_title = page_name
+            page_content = get_text_from_the_local_file(full_in_file_name)
         else:
-            x, y = wikisource_get_page_text(pguri)
-            y = remove_punctuation(y)
-            with open(full_in_flnm, "w") as f:
-                f.write(y)
+            page_title, page_content = wikisource_get_page_text(page_uri)
+            page_content = remove_punctuation(page_content)
+            with open(full_in_file_name, "w") as f:
+                f.write(page_content)
 
         print("Generating word list...")
-        words_list = Counter(y.split())
+        words_list = Counter(page_content.split())
         print("Generating word list...Done.")
-        with open(full_ou_flnm, "w") as flout:
+        with open(full_ou_file_name, "w") as flout:
             txt = "{| class=\"wikitable sortable\"\n"
             flout.write(txt)
             txt = "|-\n"
             flout.write(txt)
-            txt = f"|+ {pgnm} માટેનું ભાષા વિશ્લેષણ \n"
+            txt = f"|+ {page_name} માટેનું ભાષા વિશ્લેષણ \n"
             flout.write(txt)
             txt = "|-\n"
             flout.write(txt)
@@ -142,10 +152,11 @@ def main():
 
             txt = "|}\n\n"
             flout.write(txt)
-            unique_words = len(words_list. keys())
+            unique_words = len(words_list.keys())
             txt = f"કુલ {grand_total} શબ્દોના લખાણમાં અનન્ય શબ્દ {unique_words} છે.\n\n"
             flout.write(txt)
-            print(F"Task over for {pgnm}.\n\n\n")
+            print(F"Task over for {page_name}.\n\n\n")
+
 
 if __name__ == '__main__':
     main()
