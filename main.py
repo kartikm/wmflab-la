@@ -69,13 +69,30 @@ def remove_punctuation2(text):
 
 def wikisourec_page_uri_generator():
     base_uri = 'https://gu.wikisource.org/wiki/'
+
+    # Load list of URIs to be processed from a text file
     with open("page_names.txt") as furis:
         uri_list = furis.readlines()
+
+    # Now for each URI that is not already DONE, yield that URI to processing function.
     for a_uri in uri_list:
-        if a_uri.strip() == "":
+
+        if ":" in a_uri:
+            a_uri_part, is_it_done = a_uri.split(":")
+            a_uri_part = a_uri_part.strip()
+        else:
+            is_it_done = ""
+            a_uri_part = a_uri.strip()
+
+
+        if is_it_done.strip().upper() == "DONE":
             continue
-        yield next(count_gen), a_uri.strip(), base_uri + a_uri.strip()
-    # yield next(count_gen), 'પલકારા/માસ્તર_સાહેબ', base_uri + 'પલકારા/માસ્તર_સાહેબ'
+
+        if a_uri_part == "":
+            continue
+
+        yield next(count_gen), a_uri_part, base_uri + a_uri_part
+        # yield next(count_gen), 'પલકારા/માસ્તર_સાહેબ', base_uri + 'પલકારા/માસ્તર_સાહેબ'
     return
 
 
