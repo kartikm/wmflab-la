@@ -67,11 +67,40 @@ def remove_punctuation2(text):
     return re.sub(u"[[:punct:]]", "", text)
 
 
-def wikisourec_page_uri_generator():
-    base_uri = 'https://gu.wikisource.org/wiki/'
+"""
+    We now (from 2020-08-06) moving towards a setup that uses a text file called 
+    config.ini to load all the defaults. Earlier everything was hard-coded.
+    
+    This routine sets up a few public variables after loading them from config file.
+"""
 
+base_uri = ""
+page_list_file_name = ""
+
+def load_config_file():
+    import configparser as cf
+
+    global base_uri, page_list_file_name
+
+    if not os.path.exists("config.ini"):
+        config = cf.ConfigParser()
+        config['DEFAULT'] = {}
+        config['gu.wikisource.org'] = {}
+        config['gu.wikisource.org']['base_uri'] = 'https://gu.wikisource.org/wiki/'
+        with open("config.ini") as configfile:
+            config.write(configfile)
+
+    config = cf.ConfigParser()
+    config.read('config.ini')
+    base_uri = config['gu.wikisource.org']['base_uri']
+    page_list_file_name = config['gu.wikisource.org']['page_list_file_name']
+    # print(base_uri, page_list_file_name, config.sections())
+    return
+
+
+def wikisourec_page_uri_generator():
     # Load list of URIs to be processed from a text file
-    with open("page_names.txt") as furis:
+    with open(page_list_file_name) as furis:
         uri_list = furis.readlines()
 
     # Now for each URI that is not already DONE, yield that URI to processing function.
@@ -127,6 +156,7 @@ def get_text_from_the_local_file(full_file_name):
 
 
 def main():
+    load_config_file()
     for a_number, page_name, page_uri in wikisourec_page_uri_generator():
         os_friendly_page_name = page_name.translate({ord("/"): "_"})
         print(F"Processing started for {a_number} - {page_name}")
@@ -146,24 +176,16 @@ def main():
         words_list = Counter(page_content.split())
         print("Generating word list...Done.")
         with open(full_ou_file_name, "w") as flout:
-            txt = "{| class=\"wikitable sortable\"\n"
+            txt = "{| class=\"wikitable sortable\"\n|-\n"
             flout.write(txt)
-            txt = "|-\n"
+            txt = f"|+ {page_name} માટેનું ભાષા વિશ્લેષણ \n|-\n"
             flout.write(txt)
-            txt = f"|+ {page_name} માટેનું ભાષા વિશ્લેષણ \n"
-            flout.write(txt)
-            txt = "|-\n"
-            flout.write(txt)
-            txt = "! ક્રમ !! સંખ્યા !! શબ્દ\n"
-            flout.write(txt)
-            txt = "|-\n"
+            txt = "! ક્રમ !! સંખ્યા !! શબ્દ\n|-\n"
             flout.write(txt)
             grand_total = 0
             for i, word in enumerate(sorted(words_list, key=words_list.get, reverse=True), start=1):
-                txt = F"| {i} || {words_list[word]:>7d}  || {word:} \n"
+                txt = F"| {i} || {words_list[word]:>7d}  || {word:} \n|-\n"
                 grand_total += words_list[word]
-                flout.write(txt)
-                txt = "|-\n"
                 flout.write(txt)
 
             txt = "|}\n\n"
