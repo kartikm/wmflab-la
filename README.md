@@ -1,11 +1,10 @@
-# wsla
-wikisource language analysis
+# wmflab-la
+Generic language analysis code meant to be hosted on wmflab VPS.
 
-This project aims to automate Language Analysis of Gujarati Wiki Source Project's
-Pages. Later on it should be extended to Main Gujarati Wikipedia pages as well.
+This project aims to automate Language Analysis of Gujarati Wiki Source and 
+Gujarati Wikipedia Project's Pages.
 
-The main Script reads the URLs of the Gujarati WikiSource Pages from a file called 
-"page_names.txt". It assumes that it matches th the page's page title part on 
-Guj. Wikisource. If we want to bypass the URLs that we have already processed 
-adding a colon (:) character and writing "Done" after it would make this program 
-ignore it. 
+It is started from cloning the project wsla project. This forking was essential as
+wmflab's python support is for python version 3.5 while wsla project used to utilise
+features from python 3.6 hence the requirement to backport the code arose.
+
