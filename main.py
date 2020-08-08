@@ -4,7 +4,7 @@
 """
     Copyright    : 2020 August 3.
     Organization : VAU Soft Tech
-    Project      : vauWSLA
+    Project      : vauwmflab-la
     Script Name  : main.py
     License      : T.B.D.
     Author       : A. R. Bhatt
@@ -20,7 +20,6 @@ from bs4 import BeautifulSoup as bs
 from collections import Counter
 import unicodedata
 import sys
-import re
 from itertools import count
 
 count_gen = count(1)
@@ -58,16 +57,6 @@ def remove_punctuation(text):
 
 
 """
-    Tried using re module's power to identify punctuations but somehow it is not 
-    removing punctuations.
-"""
-
-
-def remove_punctuation2(text):
-    return re.sub(u"[[:punct:]]", "", text)
-
-
-"""
     We now (from 2020-08-06) moving towards a setup that uses a text file called 
     config.ini to load all the defaults. Earlier everything was hard-coded.
     
@@ -76,6 +65,7 @@ def remove_punctuation2(text):
 
 base_uri = ""
 page_list_file_name = ""
+
 
 def load_config_file():
     import configparser as cf
@@ -125,17 +115,14 @@ def wikisourec_page_uri_generator():
 
 
 def wikisource_get_page_text(pg):
-    print(F"Connecting to WikiSource to get the text for {pg}.")
+    print("Connecting to WikiSource to get the text for {}.".format(pg))
     status = rq.get(pg)
     if status.status_code == 200:
-        print(F"Connection Successful. Received the text.")
+        print("Connection Successful. Received the text.")
         pg_content = bs(status.text, 'html.parser')
         pgttl = pg_content.h1.text
         pgtxt = ""
-        # print(pg_content.prettify())
         for i, j in enumerate(pg_content.find_all(class_="prp-pages-output")):
-            # for i, j in enumerate(pg_content.find_all(id='bodyContent', limit=1)):
-            # print(i, j)
             pgtxt = j.text
             break
     else:
@@ -159,10 +146,10 @@ def main():
     load_config_file()
     for a_number, page_name, page_uri in wikisourec_page_uri_generator():
         os_friendly_page_name = page_name.translate({ord("/"): "_"})
-        print(F"Processing started for {a_number} - {page_name}")
+        print("Processing started for {} - {}".format(a_number, page_name))
 
-        full_in_file_name = os.path.join(in_txt_dir, f"{os_friendly_page_name}-in.txt")
-        full_ou_file_name = os.path.join(out_txt_dir, f"{os_friendly_page_name}-out.txt")
+        full_in_file_name = os.path.join(in_txt_dir, "{}-in.txt".format(os_friendly_page_name))
+        full_ou_file_name = os.path.join(out_txt_dir, "{}-out.txt".format(os_friendly_page_name))
         if check_whether_text_from_the_page_is_already_downloaded(full_in_file_name):
             page_title = page_name
             page_content = get_text_from_the_local_file(full_in_file_name)
@@ -178,22 +165,22 @@ def main():
         with open(full_ou_file_name, "w") as flout:
             txt = "{| class=\"wikitable sortable\"\n|-\n"
             flout.write(txt)
-            txt = f"|+ {page_name} માટેનું ભાષા વિશ્લેષણ \n|-\n"
+            txt = "|+ {} માટેનું ભાષા વિશ્લેષણ \n|-\n".format(page_name)
             flout.write(txt)
             txt = "! ક્રમ !! સંખ્યા !! શબ્દ\n|-\n"
             flout.write(txt)
             grand_total = 0
             for i, word in enumerate(sorted(words_list, key=words_list.get, reverse=True), start=1):
-                txt = F"| {i} || {words_list[word]:>7d}  || {word:} \n|-\n"
+                txt = "| {} || {}  || {} \n|-\n".format(i, words_list[word], word)
                 grand_total += words_list[word]
                 flout.write(txt)
 
             txt = "|}\n\n"
             flout.write(txt)
             unique_words = len(words_list.keys())
-            txt = f"કુલ {grand_total} શબ્દોના લખાણમાં અનન્ય શબ્દ {unique_words} છે.\n\n"
+            txt = "કુલ {} શબ્દોના લખાણમાં અનન્ય શબ્દ {} છે.\n\n".format(grand_total, unique_words)
             flout.write(txt)
-            print(F"Task over for {page_name}.\n\n\n")
+            print("Task over for {}.\n\n\n".format(page_name))
 
 
 if __name__ == '__main__':
